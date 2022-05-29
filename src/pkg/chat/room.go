@@ -16,23 +16,36 @@ type RoomInterface interface {
 type HandleNewMessageCallback func(message Message)
 
 type Room struct {
-	Identifier   string
-	Capacity     int
-	eventBus     pubsub.EventBusInterface
-	Conversation []Message
+	Identifier      string
+	Capacity        int
+	CurrentCapacity int
+	eventBus        pubsub.EventBusInterface
+	Conversation    []Message
 }
 
-func NewRoom(identifier string, capacity int, eb pubsub.EventBusInterface) *Room {
-	room := &Room{identifier, capacity, eb, []Message{}}
+var rooms map[string]*Room
+
+func NewRoom(identifier string, capacity int, eb pubsub.EventBusInterface) (*Room, error) {
+	if _, ok := rooms[identifier]; ok {
+		return nil, NewRoomIdentifierAlreadyInUse(identifier)
+	}
+
+	room := &Room{identifier, capacity, 1, eb, []Message{}}
 	roomManager := newRoomManager(room)
 	eb.Subscribe(room.Identifier, roomManager.ch, nil)
-	return room
+	return room, nil
 }
 
-// func EnterRoom(roomIdentifier string, eb pubsub.EventBusInterface) (*Room, error) {
-// 	eb.
+func EnterRoom(roomIdentifier string, eb pubsub.EventBusInterface) (*Room, error) {
+	if val, ok := rooms[roomIdentifier]; ok {
+		return val, nil
+	}
+	return nil, NewRoomNotFoundError(roomIdentifier)
+}
 
-// }
+func roomExists(roomIdentifier string) bool {
+
+}
 
 func (room *Room) SendMessage(message Message) {
 	room.eventBus.Publish(pubsub.NewDataEvent(room.Identifier, message), nil)
