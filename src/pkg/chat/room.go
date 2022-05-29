@@ -7,7 +7,7 @@ import (
 type Message struct {
 	Username string
 	Content  string
-	Time     int
+	Time     int64
 }
 
 type RoomInterface interface {
@@ -59,6 +59,20 @@ func LeaveRoom(room *Room) error {
 
 func (room *Room) SendMessage(message Message) {
 	room.eventBus.Publish(pubsub.NewDataEvent(room.Identifier, message), nil)
+}
+
+func (room *Room) HandleIncomingMessages(handle HandleNewMessageCallback) error {
+	ch := make(chan pubsub.DataEvent)
+	room.eventBus.Subscribe(room.Identifier, ch, nil)
+	go func() {
+		for {
+			event := <-ch
+			if msg, ok := event.Data.(Message); ok {
+				handle(msg)
+			}
+		}
+	}()
+	return nil
 }
 
 type roomManager struct {
