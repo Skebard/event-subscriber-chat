@@ -1,6 +1,8 @@
 package chat
 
-import "github.com/Skebard/event-subscriber-chat/src/pkg/pubsub"
+import (
+	"github.com/Skebard/event-subscriber-chat/src/pkg/pubsub"
+)
 
 type Message struct {
 	Username string
@@ -29,22 +31,25 @@ func NewRoom(identifier string, capacity int, eb pubsub.EventBusInterface) (*Roo
 	if _, ok := rooms[identifier]; ok {
 		return nil, NewRoomIdentifierAlreadyInUse(identifier)
 	}
-
 	room := &Room{identifier, capacity, 1, eb, []Message{}}
 	roomManager := newRoomManager(room)
 	eb.Subscribe(room.Identifier, roomManager.ch, nil)
+	if rooms == nil {
+		rooms = map[string]*Room{}
+	}
+	rooms[identifier] = room
 	return room, nil
 }
 
 func EnterRoom(roomIdentifier string, eb pubsub.EventBusInterface) (*Room, error) {
-	if val, ok := rooms[roomIdentifier]; ok {
-		return val, nil
+	if room, ok := rooms[roomIdentifier]; ok {
+		if room.CurrentCapacity == room.Capacity {
+			return nil, NewExceedRoomCapacityError(roomIdentifier, room.Capacity)
+		}
+		room.CurrentCapacity++
+		return room, nil
 	}
 	return nil, NewRoomNotFoundError(roomIdentifier)
-}
-
-func roomExists(roomIdentifier string) bool {
-
 }
 
 func (room *Room) SendMessage(message Message) {

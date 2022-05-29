@@ -6,6 +6,10 @@ type PublicRoom struct {
 	*Room
 }
 
-func NewPublicRoom(name string, capacity int, eb pubsub.EventBusInterface) *PublicRoom {
-	return &PublicRoom{NewRoom(name, capacity, eb)}
+func NewPublicRoom(name string, capacity int, eb pubsub.EventBusInterface) (*PublicRoom, error) {
+	if room, error := NewRoom(name, capacity, eb); error != nil {
+		return nil, error
+	} else {
+		return &PublicRoom{room}, nil
+	}
 }

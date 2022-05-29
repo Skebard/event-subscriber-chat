@@ -30,5 +30,13 @@ type RoomIdentifierAlreadyInUse struct {
 
 func NewRoomIdentifierAlreadyInUse(roomIdentifier string) error {
 	return &RoomIdentifierAlreadyInUse{RoomError{roomIdentifier, "Room identifier already in use"}}
+}
 
+type ExceedRoomCapacityError struct {
+	RoomError
+	RoomCapacity int
+}
+
+func NewExceedRoomCapacityError(identifier string, capacity int) error {
+	return &ExceedRoomCapacityError{RoomError{identifier, "Room exceeds capacity"}, capacity}
 }
