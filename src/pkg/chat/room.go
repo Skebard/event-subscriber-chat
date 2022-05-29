@@ -52,6 +52,11 @@ func EnterRoom(roomIdentifier string, eb pubsub.EventBusInterface) (*Room, error
 	return nil, NewRoomNotFoundError(roomIdentifier)
 }
 
+func LeaveRoom(room *Room) error {
+	room.CurrentCapacity--
+	return nil
+}
+
 func (room *Room) SendMessage(message Message) {
 	room.eventBus.Publish(pubsub.NewDataEvent(room.Identifier, message), nil)
 }
